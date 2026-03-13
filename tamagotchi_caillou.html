@@ -447,7 +447,7 @@
   <div class="naming-card">
     <img class="naming-sprite" src="images/Sprite caillou.png" alt="Caillou" />
     <div class="naming-title">🪨 Un nouveau caillou est né !<br>Donne-lui un prénom</div>
-    <input class="naming-input" id="naming-input" type="text" maxlength="12" placeholder="Mon Caillou..." />
+    <input class="naming-input" id="naming-input" type="text" maxlength="12" placeholder="Rocky" />
     <button class="naming-btn" onclick="confirmName()">C'est parti ! 🪨</button>
   </div>
 </div>
@@ -1017,17 +1017,20 @@ function restartGame() {
 
   function confirmName() {
     const input = document.getElementById('naming-input');
-    const name = input.value.trim();
+    // On utilise 'let' pour pouvoir modifier la variable si elle est vide
+    let name = input.value.trim();
+
+    // Si le nom est vide, on force "Rocky"
     if (!name) {
-      input.style.borderColor = '#e05050';
-      input.placeholder = 'Tape un prénom !';
-      setTimeout(() => input.style.borderColor = '', 800);
-      return;
+      name = 'Rocky';
     }
+
     caillouState.name = name;
     saveToLocalStorage();
     document.getElementById('naming-screen').classList.add('hidden');
     updateTitle();
+    
+    console.log("Nom du caillou confirmé :", name);
   }
 
   function updateTitle() {
