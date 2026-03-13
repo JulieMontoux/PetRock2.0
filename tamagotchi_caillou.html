@@ -166,6 +166,45 @@
   .faim { background: linear-gradient(135deg, #ff9a76, #ff6b6b); }
   .ennui { background: linear-gradient(135deg, #a29bfe, #6c5ce7); }
   .bonheur { background: linear-gradient(135deg, #ffd93d, #ffb142); }
+
+  .buttons-row {
+    margin-top: 20px;
+    display: flex;
+    justify-content: center;
+  }
+
+  .btn-group {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .btn {
+    width: 58px;
+    height: 58px;
+    border-radius: 50%;
+    border: none;
+    cursor: pointer;
+    font-size: 1.4rem;
+    transition: transform 0.1s, box-shadow 0.1s;
+  }
+
+  .btn:active { transform: translateY(4px); box-shadow: 0 1px 0 var(--sh) !important; }
+  .btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none !important; }
+
+  .btn.feed {
+    background: #e8b860;
+    box-shadow: 0 5px 0 #b8884a;
+    --sh: #b8884a;
+  }
+
+  .btn-label {
+    font-family: 'Fredoka One', cursive;
+    font-size: 0.65rem;
+    color: #3d2b1f;
+    letter-spacing: 0.5px;
+  }
 </style>
 </head>
 <body>
@@ -201,6 +240,13 @@
         <div class="stat-bar bonheur" id="bonheur-bar" style="width: 100%"></div>
         <div class="stat-value" id="bonheur-value">100%</div>
       </div>
+    </div>
+  </div>
+
+  <div class="buttons-row">
+    <div class="btn-group">
+      <button class="btn feed" id="btn-feed" onclick="feed()">🍃</button>
+      <span class="btn-label">NOURRIR</span>
     </div>
   </div>
 </div>
@@ -423,6 +469,50 @@
       happiness: caillouState.happiness,
       mood: caillouState.currentMood
     });
+  }
+
+  // ====================================
+  // US-03 : NOURRIR LE CAILLOU
+  // ====================================
+
+  let isFeeding = false;
+
+  function feed() {
+    if (isFeeding) return;
+    isFeeding = true;
+
+    const btn = document.getElementById('btn-feed');
+    const caillouImg = document.getElementById('caillou');
+    btn.disabled = true;
+
+    // Sauvegarder le sprite actuel avant de manger
+    const previousSrc = caillouImg.src;
+
+    // Passer au sprite "en train de manger"
+    caillouImg.style.opacity = '0';
+    setTimeout(() => {
+      caillouImg.src = 'images/Feed_caillou.png';
+      caillouImg.style.opacity = '1';
+    }, 150);
+
+    // Après 1 seconde, restaurer le sprite précédent et augmenter la faim
+    setTimeout(() => {
+      caillouState.hunger = Math.min(100, Number(caillouState.hunger) + 20);
+      saveToLocalStorage();
+
+      // Recalculer le bon sprite selon l'humeur actuelle
+      caillouImg.style.opacity = '0';
+      setTimeout(() => {
+        // updateCaillouImage() va forcer le recalcul en réinitialisant currentMood
+        const previousMood = caillouState.currentMood;
+        caillouState.currentMood = null; // force le changement
+        updateDisplay();
+        caillouImg.style.opacity = '1';
+
+        isFeeding = false;
+        btn.disabled = false;
+      }, 150);
+    }, 1000);
   }
 
   // ====================================
