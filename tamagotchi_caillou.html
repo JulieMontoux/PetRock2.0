@@ -110,6 +110,12 @@
     75% { transform: translateY(-15px) rotate(5deg); }
   }
 
+  @keyframes shake-warning {
+    0%, 100% { transform: translateX(0); }
+    10%, 30%, 50%, 70%, 90% { transform: translateX(-3px); }
+    20%, 40%, 60%, 80% { transform: translateX(3px); }
+  }
+
   .stats {
     margin-top: 20px;
     display: flex;
@@ -253,6 +259,101 @@
       transform: translate(-50%, -120px) scale(0.8);
     }
   }
+
+  /* Game Over Overlay */
+  .game-over-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.8);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    animation: fadeIn 0.5s ease-out;
+  }
+
+  .game-over-overlay.active {
+    display: flex;
+  }
+
+  @keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+
+  .game-over-box {
+    background: #e8dcc8;
+    border-radius: 30px;
+    border: 4px solid #c4a882;
+    box-shadow: 0 10px 40px rgba(0,0,0,0.5);
+    padding: 40px 30px;
+    text-align: center;
+    max-width: 300px;
+    animation: slideUp 0.5s ease-out;
+  }
+
+  @keyframes slideUp {
+    from { transform: translateY(50px); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
+  }
+
+  .game-over-title {
+    font-family: 'Fredoka One', cursive;
+    font-size: 1.8rem;
+    color: #8b4513;
+    margin-bottom: 10px;
+    text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
+  }
+
+  .game-over-emoji {
+    font-size: 4rem;
+    margin: 20px 0;
+    animation: pulse 1.5s ease-in-out infinite;
+  }
+
+  @keyframes pulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.1); }
+  }
+
+  .game-over-message {
+    font-family: 'Fredoka One', cursive;
+    font-size: 0.9rem;
+    color: #3d2b1f;
+    margin-bottom: 30px;
+    line-height: 1.5;
+  }
+
+  .restart-btn {
+    background: #90b870;
+    border: none;
+    border-radius: 25px;
+    padding: 15px 40px;
+    font-family: 'Fredoka One', cursive;
+    font-size: 1rem;
+    color: white;
+    cursor: pointer;
+    box-shadow: 0 5px 0 #6a8a50;
+    transition: transform 0.1s, box-shadow 0.1s;
+  }
+
+  .restart-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 7px 0 #6a8a50;
+  }
+
+  .restart-btn:active {
+    transform: translateY(3px);
+    box-shadow: 0 2px 0 #6a8a50;
+  }
+
+  /* Animation de fissure */
+  .cracked {
+    animation: shake-warning 0.5s ease-in-out;
+  }
 </style>
 </head>
 <body>
@@ -291,7 +392,7 @@
     </div>
   </div>
 
-  <div class="buttons-row">
+  <div class="buttons-row" id="action-buttons">
     <div class="btn-group">
       <button class="btn feed" id="btn-feed" onclick="feed()">🍃</button>
       <span class="btn-label">NOURRIR</span>
@@ -309,23 +410,39 @@
   </div>
 </div>
 
+<!-- Game Over Overlay -->
+<div class="game-over-overlay" id="game-over-overlay">
+  <div class="game-over-box">
+    <div class="game-over-title">GAME OVER</div>
+    <div class="game-over-emoji">💔</div>
+    <div class="game-over-message" id="game-over-message">
+      Ton caillou s'est complètement fissuré...<br>
+      Tu l'as trop négligé !
+    </div>
+    <button class="restart-btn" onclick="restartGame()">🔄 RECOMMENCER</button>
+  </div>
+</div>
+
 <script>
   // ====================================
   // CONFIGURATION
   // ====================================
   const CONFIG = {
     STORAGE_KEY: 'tamagotchi_caillou_data',
-    DECAY_INTERVAL: 30000, // 30 secondes
+    DECAY_INTERVAL: 2000, // 30 secondes
     DECAY_AMOUNT: 5, // Diminue de 5% toutes les 30s
     IMAGES: {
       HAPPY: 'images/Happy_caillou.png',
       NEUTRAL: 'images/Sprite caillou.png',
       HUNGRY: 'images/Hungry_caillou.png',
-      SAD: 'images/Bored_caillou.png'
+      SAD: 'images/Bored_caillou.png',
+      CRACKED: 'images/Neglected_caillou.png',  // Image fissurée (≤10%)
+      DEAD: 'images/Dead_caillou.png'         // Image morte (toutes à 0)
     },
-    CRITICAL_THRESHOLD: 30, // Seuil critique pour une stat
-    PLAY_BOOST_MIN: 20,     // Boost minimum pour jouer
-    PLAY_BOOST_MAX: 30      // Boost maximum pour jouer
+    CRITICAL_THRESHOLD: 30,  // Seuil critique pour une stat
+    CRACKED_THRESHOLD: 10,   // Seuil pour apparence fissurée
+    PLAY_BOOST_MIN: 20,
+    PLAY_BOOST_MAX: 30
   };
 
   // ====================================
@@ -336,8 +453,118 @@
     boredom: 100,
     happiness: 100,
     lastUpdate: Date.now(),
-    currentMood: 'happy'
+    currentMood: 'happy',
+    isDead: false
   };
+
+  let decayTimer = null;
+
+  // ====================================
+  // GESTION DE LA MORT DU CAILLOU
+  // ====================================
+  
+  /**
+   * Vérifie si le caillou est mort (toutes les stats à 0)
+   */
+  function checkDeath() {
+    const hunger = Number(caillouState.hunger) || 0;
+    const boredom = Number(caillouState.boredom) || 0;
+    const happiness = Number(caillouState.happiness) || 0;
+
+    // Mort si TOUTES les stats sont à 0
+    if (hunger === 0 && boredom === 0 && happiness === 0) {
+      caillouState.isDead = true;
+      showGameOver();
+      return true;
+    }
+
+    return false;
+  }
+
+  /**
+   * Affiche l'écran Game Over
+   */
+  function showGameOver() {
+    const overlay = document.getElementById('game-over-overlay');
+    const caillouImg = document.getElementById('caillou');
+    const buttons = document.getElementById('action-buttons');
+
+    // Arrêter le timer de dégradation
+    if (decayTimer) {
+      clearInterval(decayTimer);
+    }
+
+    // Changer le sprite pour l'image de mort
+    caillouImg.src = CONFIG.IMAGES.DEAD;
+    caillouImg.style.animation = 'none';
+
+    // Désactiver tous les boutons
+    buttons.style.opacity = '0.3';
+    buttons.style.pointerEvents = 'none';
+
+    // Afficher l'overlay après un court délai
+    setTimeout(() => {
+      overlay.classList.add('active');
+    }, 500);
+
+    console.log('💀 Game Over - Le caillou est mort');
+  }
+
+  /**
+   * Redémarre le jeu
+   */
+  /**
+ * Redémarre le jeu
+ */
+function restartGame() {
+  console.log('🔄 Redémarrage du jeu...');
+
+  // Réinitialiser l'état
+  caillouState = {
+    hunger: 100,
+    boredom: 100,
+    happiness: 100,
+    lastUpdate: Date.now(),
+    currentMood: null,  // ← CHANGÉ: forcer le recalcul
+    isDead: false
+  };
+
+  // Vider le LocalStorage
+  localStorage.removeItem(CONFIG.STORAGE_KEY);
+  console.log('LocalStorage vidé');
+
+  // Sauvegarder le nouvel état
+  saveToLocalStorage();
+
+  // Masquer l'overlay
+  const overlay = document.getElementById('game-over-overlay');
+  overlay.classList.remove('active');
+
+  // Réactiver les boutons
+  const buttons = document.getElementById('action-buttons');
+  buttons.style.opacity = '1';
+  buttons.style.pointerEvents = 'auto';
+
+  // Réinitialiser l'image du caillou
+  const caillouImg = document.getElementById('caillou');
+  caillouImg.style.animation = 'idle-bob 2s ease-in-out infinite';
+  
+  // Forcer la mise à jour du sprite avec transition
+  caillouImg.style.opacity = '0';
+  setTimeout(() => {
+    // Mettre à jour l'affichage (va recalculer le sprite)
+    updateDisplay();
+    caillouImg.style.opacity = '1';
+  }, 150);
+
+  // Redémarrer le timer
+  if (decayTimer) {
+    clearInterval(decayTimer);
+  }
+  decayTimer = setInterval(decayStats, CONFIG.DECAY_INTERVAL);
+
+  console.log('✅ Jeu redémarré avec succès!');
+}
 
   // ====================================
   // GESTION DE L'ÉTAT VISUEL DU CAILLOU
@@ -347,11 +574,22 @@
    * Calcule l'état du caillou basé sur la logique de priorité
    */
   function calculateMood() {
-    // Vérifier que les valeurs sont valides
     const hunger = Number(caillouState.hunger) || 0;
     const boredom = Number(caillouState.boredom) || 0;
     const happiness = Number(caillouState.happiness) || 0;
-    
+
+    // Vérifier la mort (toutes à 0)
+    if (hunger === 0 && boredom === 0 && happiness === 0) {
+      return 'dead';
+    }
+
+    // Vérifier l'état fissuré (au moins une stat ≤ 10%)
+    if (hunger <= CONFIG.CRACKED_THRESHOLD || 
+        boredom <= CONFIG.CRACKED_THRESHOLD || 
+        happiness <= CONFIG.CRACKED_THRESHOLD) {
+      return 'cracked';
+    }
+
     // Priorité 1 : La faim est critique
     if (hunger < CONFIG.CRITICAL_THRESHOLD) {
       return 'hungry';
@@ -384,6 +622,15 @@
       
       let newImageSrc;
       switch(newMood) {
+        case 'dead':
+          newImageSrc = CONFIG.IMAGES.DEAD;
+          break;
+        case 'cracked':
+          newImageSrc = CONFIG.IMAGES.CRACKED;
+          // Ajouter l'animation de tremblement
+          caillouImg.classList.add('cracked');
+          setTimeout(() => caillouImg.classList.remove('cracked'), 500);
+          break;
         case 'happy':
           newImageSrc = CONFIG.IMAGES.HAPPY;
           break;
@@ -419,7 +666,8 @@
         boredom: Number(caillouState.boredom),
         happiness: Number(caillouState.happiness),
         lastUpdate: Number(caillouState.lastUpdate),
-        currentMood: caillouState.currentMood
+        currentMood: caillouState.currentMood,
+        isDead: caillouState.isDead
       };
       localStorage.setItem(CONFIG.STORAGE_KEY, JSON.stringify(dataToSave));
       console.log('Données sauvegardées:', dataToSave);
@@ -434,12 +682,12 @@
       if (savedData) {
         const parsed = JSON.parse(savedData);
         
-        // S'assurer que toutes les valeurs sont des nombres valides
         caillouState.hunger = Number(parsed.hunger) >= 0 ? Number(parsed.hunger) : 100;
         caillouState.boredom = Number(parsed.boredom) >= 0 ? Number(parsed.boredom) : 100;
         caillouState.happiness = Number(parsed.happiness) >= 0 ? Number(parsed.happiness) : 100;
         caillouState.lastUpdate = Number(parsed.lastUpdate) || Date.now();
         caillouState.currentMood = parsed.currentMood || 'happy';
+        caillouState.isDead = parsed.isDead || false;
         
         console.log('Données chargées:', caillouState);
         return true;
@@ -477,7 +725,6 @@
   // ====================================
   
   function updateDisplay() {
-    // S'assurer que les valeurs sont des nombres
     const hunger = Number(caillouState.hunger) || 0;
     const boredom = Number(caillouState.boredom) || 0;
     const happiness = Number(caillouState.happiness) || 0;
@@ -515,6 +762,9 @@
   // ====================================
   
   function decayStats() {
+    // Ne pas dégrader si le caillou est mort
+    if (caillouState.isDead) return;
+
     caillouState.hunger = Math.max(0, Number(caillouState.hunger) - CONFIG.DECAY_AMOUNT);
     caillouState.boredom = Math.max(0, Number(caillouState.boredom) - CONFIG.DECAY_AMOUNT);
     caillouState.happiness = Math.max(0, Number(caillouState.happiness) - CONFIG.DECAY_AMOUNT);
@@ -522,6 +772,9 @@
     
     saveToLocalStorage();
     updateDisplay();
+
+    // Vérifier la mort après la mise à jour
+    checkDeath();
     
     console.log('Stats diminuées:', {
       hunger: caillouState.hunger,
@@ -538,34 +791,26 @@
   let isFeeding = false;
 
   function feed() {
-    if (isFeeding) return;
+    if (isFeeding || caillouState.isDead) return;
     isFeeding = true;
 
     const btn = document.getElementById('btn-feed');
     const caillouImg = document.getElementById('caillou');
     btn.disabled = true;
 
-    // Sauvegarder le sprite actuel avant de manger
-    const previousSrc = caillouImg.src;
-
-    // Passer au sprite "en train de manger"
     caillouImg.style.opacity = '0';
     setTimeout(() => {
       caillouImg.src = 'images/Feed_caillou.png';
       caillouImg.style.opacity = '1';
     }, 150);
 
-    // Après 1 seconde, restaurer le sprite précédent et augmenter la faim
     setTimeout(() => {
       caillouState.hunger = Math.min(100, Number(caillouState.hunger) + 20);
       saveToLocalStorage();
 
-      // Recalculer le bon sprite selon l'humeur actuelle
       caillouImg.style.opacity = '0';
       setTimeout(() => {
-        // updateCaillouImage() va forcer le recalcul en réinitialisant currentMood
-        const previousMood = caillouState.currentMood;
-        caillouState.currentMood = null; // force le changement
+        caillouState.currentMood = null;
         updateDisplay();
         caillouImg.style.opacity = '1';
 
@@ -581,12 +826,8 @@
 
   let isPlaying = false;
 
-  /**
-   * Fonction play() qui augmente l'amusement (réduit l'amusement) de 20-30%
-   * et affiche un feedback visuel
-   */
   function play() {
-    if (isPlaying) return;
+    if (isPlaying || caillouState.isDead) return;
     isPlaying = true;
 
     const btn = document.getElementById('btn-play');
@@ -594,13 +835,11 @@
     const screen = document.getElementById('game-screen');
     btn.disabled = true;
 
-    // Animation de rebond du caillou
     caillouImg.style.animation = 'none';
     setTimeout(() => {
       caillouImg.style.animation = 'bounce-play 0.8s ease-out';
     }, 10);
 
-    // Créer et afficher un emoji de jeu aléatoire
     const emojis = ['🎮', '⚽', '🎯', '🎲', '🎪', '✨'];
     const randomEmoji = emojis[Math.floor(Math.random() * emojis.length)];
     
@@ -609,31 +848,24 @@
     emojiEl.textContent = randomEmoji;
     screen.appendChild(emojiEl);
 
-    // Calculer le boost aléatoire entre 20 et 30%
     const boost = Math.floor(
       Math.random() * (CONFIG.PLAY_BOOST_MAX - CONFIG.PLAY_BOOST_MIN + 1) 
       + CONFIG.PLAY_BOOST_MIN
     );
 
-    // Après 1 seconde, augmenter l'amusement (réduire l'amusement signifie augmenter la jauge)
     setTimeout(() => {
       caillouState.boredom = Math.min(100, Number(caillouState.boredom) + boost);
-      
-      // Bonus de bonheur si on joue
       caillouState.happiness = Math.min(100, Number(caillouState.happiness) + 10);
       
-      // Sauvegarder automatiquement dans LocalStorage
       saveToLocalStorage();
       updateDisplay();
 
-      console.log(`Joué avec le caillou! amusement +${boost}%, Bonheur +10%`);
+      console.log(`Joué avec le caillou! Amusement +${boost}%, Bonheur +10%`);
 
-      // Supprimer l'emoji après l'animation
       setTimeout(() => {
         emojiEl.remove();
       }, 1000);
 
-      // Restaurer l'animation normale
       caillouImg.style.animation = 'idle-bob 2s ease-in-out infinite';
 
       isPlaying = false;
@@ -648,28 +880,26 @@
   let isPetting = false;
 
   function pet() {
-    if (isPetting) return;
+    if (isPetting || caillouState.isDead) return;
     isPetting = true;
 
     const btn = document.getElementById('btn-pet');
     const caillouImg = document.getElementById('caillou');
     btn.disabled = true;
 
-    // Passer au sprite "en train d'être caressé"
     caillouImg.style.opacity = '0';
     setTimeout(() => {
       caillouImg.src = 'images/Pet_caillou.png';
       caillouImg.style.opacity = '1';
     }, 150);
 
-    // Après 1 seconde, restaurer le sprite selon l'humeur et augmenter le bonheur
     setTimeout(() => {
       caillouState.happiness = Math.min(100, Number(caillouState.happiness) + 20);
       saveToLocalStorage();
 
       caillouImg.style.opacity = '0';
       setTimeout(() => {
-        caillouState.currentMood = null; // force recalcul du sprite
+        caillouState.currentMood = null;
         updateDisplay();
         caillouImg.style.opacity = '1';
 
@@ -686,27 +916,31 @@
   function init() {
     console.log('Initialisation du Tamagotchi Caillou...');
     
-    // Charger les données sauvegardées
     const hasData = loadFromLocalStorage();
     
     if (hasData) {
       console.log('Données existantes trouvées');
       catchUpMissedDecay();
+
+      // Vérifier si le caillou était mort
+      if (caillouState.isDead || checkDeath()) {
+        showGameOver();
+      }
     } else {
       console.log('Première visite - initialisation des données');
       saveToLocalStorage();
     }
     
-    // Afficher l'état initial
     updateDisplay();
     
-    // Démarrer le timer de dégradation automatique
-    setInterval(decayStats, CONFIG.DECAY_INTERVAL);
+    // Ne démarrer le timer que si le caillou n'est pas mort
+    if (!caillouState.isDead) {
+      decayTimer = setInterval(decayStats, CONFIG.DECAY_INTERVAL);
+    }
     
     console.log('Tamagotchi Caillou initialisé avec succès!');
   }
 
-  // Attendre que le DOM soit complètement chargé
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', init);
   } else {
