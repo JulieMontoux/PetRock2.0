@@ -110,8 +110,68 @@
     75% { transform: translateY(-15px) rotate(5deg); }
   }
 
+  @keyframes shake-warning {
+    0%, 100% { transform: translateX(0); }
+    10%, 30%, 50%, 70%, 90% { transform: translateX(-3px); }
+    20%, 40%, 60%, 80% { transform: translateX(3px); }
+  }
+
+  /* Barre XP */
+  .xp-container {
+    margin-top: 16px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .xp-label {
+    font-family: 'Fredoka One', cursive;
+    font-size: 0.7rem;
+    color: #3d2b1f;
+    min-width: 30px;
+  }
+
+  .xp-bar-container {
+    flex: 1;
+    height: 14px;
+    background: rgba(255,255,255,0.4);
+    border-radius: 8px;
+    border: 2px solid #a08060;
+    overflow: hidden;
+    position: relative;
+    box-shadow: inset 0 2px 4px rgba(0,0,0,0.2);
+  }
+
+  .xp-bar {
+    height: 100%;
+    background: linear-gradient(135deg, #4ade80, #22c55e);
+    transition: width 0.5s ease-out;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .xp-bar::after {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 40%;
+    background: linear-gradient(to bottom, rgba(255,255,255,0.4), transparent);
+  }
+
+  .xp-text {
+    position: absolute;
+    right: 4px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-family: 'Fredoka One', cursive;
+    font-size: 0.6rem;
+    color: #3d2b1f;
+    text-shadow: 0 1px 2px rgba(255,255,255,0.8);
+    z-index: 1;
+  }
+
   .stats {
-    margin-top: 20px;
+    margin-top: 16px;
     display: flex;
     flex-direction: column;
     gap: 12px;
@@ -253,16 +313,261 @@
       transform: translate(-50%, -120px) scale(0.8);
     }
   }
+
+  /* Notification d'évolution */
+  .evolution-notification {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: #e8dcc8;
+    border-radius: 20px;
+    border: 4px solid #c4a882;
+    box-shadow: 0 10px 40px rgba(0,0,0,0.5);
+    padding: 30px 40px;
+    text-align: center;
+    z-index: 2000;
+    opacity: 0;
+    pointer-events: none;
+    animation: evolutionPop 3s ease-out;
+  }
+
+  @keyframes evolutionPop {
+    0% { opacity: 0; transform: translate(-50%, -50%) scale(0.5); }
+    10% { opacity: 1; transform: translate(-50%, -50%) scale(1.1); }
+    20% { transform: translate(-50%, -50%) scale(1); }
+    80% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+    100% { opacity: 0; transform: translate(-50%, -50%) scale(0.8); }
+  }
+
+  .evolution-title {
+    font-family: 'Fredoka One', cursive;
+    font-size: 1.5rem;
+    color: #4ade80;
+    margin-bottom: 10px;
+    text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
+  }
+
+  .evolution-message {
+    font-family: 'Fredoka One', cursive;
+    font-size: 1rem;
+    color: #3d2b1f;
+  }
+
+  /* Game Over Overlay */
+  .game-over-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.8);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    animation: fadeIn 0.5s ease-out;
+  }
+
+  .game-over-overlay.active {
+    display: flex;
+  }
+
+  @keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+
+  .game-over-box {
+    background: #e8dcc8;
+    border-radius: 30px;
+    border: 4px solid #c4a882;
+    box-shadow: 0 10px 40px rgba(0,0,0,0.5);
+    padding: 40px 30px;
+    text-align: center;
+    max-width: 300px;
+    animation: slideUp 0.5s ease-out;
+  }
+
+  @keyframes slideUp {
+    from { transform: translateY(50px); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
+  }
+
+  /* US-07 : Écran de nommage */
+  .naming-screen {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.55);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 100;
+  }
+
+  .naming-screen.hidden { display: none; }
+
+  .naming-card {
+    background: #e8dcc8;
+    border-radius: 28px;
+    border: 4px solid #c4a882;
+    box-shadow: 0 10px 0 #a08060, 0 16px 40px rgba(0,0,0,0.35);
+    padding: 30px 28px 28px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 16px;
+    width: 260px;
+  }
+
+  .naming-sprite {
+    width: 90px;
+    height: 90px;
+    object-fit: contain;
+    animation: idle-bob 2s ease-in-out infinite;
+    filter: drop-shadow(0 4px 8px rgba(0,0,0,0.25));
+  }
+
+  .naming-title {
+    font-family: 'Fredoka One', cursive;
+    font-size: 1rem;
+    color: #3d2b1f;
+    text-align: center;
+    letter-spacing: 1px;
+  }
+
+  .naming-input {
+    width: 100%;
+    padding: 10px 14px;
+    border-radius: 14px;
+    border: 3px solid #c4a882;
+    background: #f5efe0;
+    font-family: 'Fredoka One', cursive;
+    font-size: 1.1rem;
+    color: #3d2b1f;
+    text-align: center;
+    outline: none;
+    box-shadow: inset 0 2px 5px rgba(0,0,0,0.1);
+    transition: border-color 0.2s;
+  }
+
+  .naming-input:focus { border-color: #e8b860; }
+
+  .naming-btn {
+    width: 100%;
+    padding: 12px;
+    border-radius: 14px;
+    border: none;
+    cursor: pointer;
+    font-family: 'Fredoka One', cursive;
+    font-size: 1rem;
+    letter-spacing: 1px;
+    background: #e8b860;
+    color: #3d2b1f;
+    box-shadow: 0 5px 0 #b8884a;
+    transition: transform 0.1s, box-shadow 0.1s;
+  }
+
+  .naming-btn:active {
+    transform: translateY(4px);
+    box-shadow: 0 1px 0 #b8884a;
+  }
+
+  /* Nom affiché dans le titre */
+  .title span {
+    font-size: 0.75rem;
+    opacity: 0.8;
+    display: block;
+    letter-spacing: 1px;
+    font-family: 'Fredoka One', cursive;
+    font-size: 1.8rem;
+    color: #8b4513;
+    margin-bottom: 10px;
+    text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
+  }
+
+  .game-over-title {
+    font-family: 'Fredoka One', cursive;
+    font-size: 1.8rem;
+    color: #8b4513;
+    margin-bottom: 10px;
+    text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
+  }
+
+  .game-over-emoji {
+    font-size: 4rem;
+    margin: 20px 0;
+    animation: pulse 1.5s ease-in-out infinite;
+  }
+
+  @keyframes pulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.1); }
+  }
+
+  .game-over-message {
+    font-family: 'Fredoka One', cursive;
+    font-size: 0.9rem;
+    color: #3d2b1f;
+    margin-bottom: 30px;
+    line-height: 1.5;
+  }
+
+  .restart-btn {
+    background: #90b870;
+    border: none;
+    border-radius: 25px;
+    padding: 15px 40px;
+    font-family: 'Fredoka One', cursive;
+    font-size: 1rem;
+    color: white;
+    cursor: pointer;
+    box-shadow: 0 5px 0 #6a8a50;
+    transition: transform 0.1s, box-shadow 0.1s;
+  }
+
+  .restart-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 7px 0 #6a8a50;
+  }
+
+  .restart-btn:active {
+    transform: translateY(3px);
+    box-shadow: 0 2px 0 #6a8a50;
+  }
+
+  /* Animation de fissure */
+  .cracked {
+    animation: shake-warning 0.5s ease-in-out;
+  }
 </style>
 </head>
 <body>
 
+<div class="naming-screen hidden" id="naming-screen">
+  <div class="naming-card">
+    <img class="naming-sprite" src="images/Sprite caillou.png" alt="Caillou" />
+    <div class="naming-title">🪨 Un nouveau caillou est né !<br>Donne-lui un prénom</div>
+    <input class="naming-input" id="naming-input" type="text" maxlength="12" placeholder="Rocky" />
+    <button class="naming-btn" onclick="confirmName()">C'est parti ! 🪨</button>
+  </div>
+</div>
+
 <div class="device">
-  <div class="title">🪨 CAILLOU 🪨</div>
+  <div class="title" id="device-title">🪨 CAILLOU 🪨</div>
 
   <div class="screen" id="game-screen">
     <div class="ground"></div>
     <img id="caillou" src="images/Sprite caillou.png" alt="Caillou" />
+  </div>
+
+  <!-- Barre XP -->
+  <div class="xp-container">
+    <div class="xp-label">⭐ XP</div>
+    <div class="xp-bar-container">
+      <div class="xp-bar" id="xp-bar" style="width: 0%"></div>
+      <div class="xp-text" id="xp-text">0/50</div>
+    </div>
   </div>
 
   <div class="stats">
@@ -291,7 +596,7 @@
     </div>
   </div>
 
-  <div class="buttons-row">
+  <div class="buttons-row" id="action-buttons">
     <div class="btn-group">
       <button class="btn feed" id="btn-feed" onclick="feed()">🍃</button>
       <span class="btn-label">NOURRIR</span>
@@ -309,60 +614,262 @@
   </div>
 </div>
 
+<!-- Game Over Overlay -->
+<div class="game-over-overlay" id="game-over-overlay">
+  <div class="game-over-box">
+    <div class="game-over-title">GAME OVER</div>
+    <div class="game-over-emoji">💔</div>
+    <div class="game-over-message" id="game-over-message">
+      Ton caillou s'est complètement fissuré...<br>
+      Tu l'as trop négligé !
+    </div>
+    <button class="restart-btn" onclick="restartGame()">🔄 RECOMMENCER</button>
+  </div>
+</div>
+
 <script>
   // ====================================
   // CONFIGURATION
   // ====================================
   const CONFIG = {
     STORAGE_KEY: 'tamagotchi_caillou_data',
-    DECAY_INTERVAL: 30000, // 30 secondes
-    DECAY_AMOUNT: 5, // Diminue de 5% toutes les 30s
+    DECAY_INTERVAL: 5000, // 30 secondes
+    DECAY_AMOUNT: 10,
+    XP_PER_INTERACTION: 5,      // XP gagnée par interaction
+    EVOLUTION_THRESHOLD: 50,     // XP nécessaire pour évoluer
     IMAGES: {
-      HAPPY: 'images/Happy_caillou.png',
-      NEUTRAL: 'images/Sprite caillou.png',
-      HUNGRY: 'images/Hungry_caillou.png',
-      SAD: 'images/Bored_caillou.png'
+      // Stade 1 : Galet (0-49 XP)
+      STAGE1: {
+        HAPPY: 'images/Happy_caillou.png',
+        NEUTRAL: 'images/Sprite caillou.png',
+        HUNGRY: 'images/Hungry_caillou.png',
+        SAD: 'images/Bored_caillou.png',
+        CRACKED: 'images/Neglected_caillou.png',
+        DEAD: 'images/Dead_caillou.png',
+        FEED: 'images/Feed_caillou.png',
+        PET: 'images/Pet_caillou.png'
+      },
+      // Stade 2 : Rocher (50+ XP)
+      STAGE2: {
+        HAPPY: 'images/happy_rock.png',
+        NEUTRAL: 'images/sprite_rock.png',
+        HUNGRY: 'images/hungry_rock.png',
+        SAD: 'images/bored_rock.png',
+        CRACKED: 'images/neglected_rock.png',
+        DEAD: 'images/dead_rock.png',
+        FEED: 'images/feed_rock.png',
+        PET: 'images/pet_rock.png'
+      }
     },
-    CRITICAL_THRESHOLD: 30, // Seuil critique pour une stat
-    PLAY_BOOST_MIN: 20,     // Boost minimum pour jouer
-    PLAY_BOOST_MAX: 30      // Boost maximum pour jouer
+    CRITICAL_THRESHOLD: 30,
+    CRACKED_THRESHOLD: 10,
+    PLAY_BOOST_MIN: 20,
+    PLAY_BOOST_MAX: 30
   };
 
   // ====================================
-  // TÂCHE 1: Créer l'objet état du caillou
+  // ÉTAT DU CAILLOU
   // ====================================
   let caillouState = {
+    name: '',
+    xp: 0,                    // XP actuelle
+    evolutionStage: 1,        // Stade d'évolution (1 ou 2)
     hunger: 100,
     boredom: 100,
     happiness: 100,
     lastUpdate: Date.now(),
-    currentMood: 'happy'
+    currentMood: 'happy',
+    isDead: false
   };
+
+  let decayTimer = null;
+
+  // ====================================
+  // SYSTÈME D'XP ET D'ÉVOLUTION
+  // ====================================
+
+  /**
+   * Gagne de l'XP et vérifie l'évolution
+   */
+  function gainXP(amount) {
+    const oldStage = caillouState.evolutionStage;
+    caillouState.xp += amount;
+
+    // Vérifier l'évolution
+    if (caillouState.xp >= CONFIG.EVOLUTION_THRESHOLD && caillouState.evolutionStage === 1) {
+      caillouState.evolutionStage = 2;
+      showEvolutionNotification();
+      console.log(`🎉 ÉVOLUTION ! Stade ${caillouState.evolutionStage}`);
+    }
+
+    updateXPDisplay();
+    saveToLocalStorage();
+  }
+
+  /**
+   * Met à jour l'affichage de la barre XP
+   */
+  function updateXPDisplay() {
+    const xpBar = document.getElementById('xp-bar');
+    const xpText = document.getElementById('xp-text');
+
+    // Calculer le pourcentage pour la barre (0-50 XP = 0-100%)
+    let percentage = (caillouState.xp / CONFIG.EVOLUTION_THRESHOLD) * 100;
+    
+    // Si évolué, la barre reste à 100%
+    if (caillouState.evolutionStage >= 2) {
+      percentage = 100;
+      xpText.textContent = `MAX`;
+    } else {
+      percentage = Math.min(100, percentage);
+      xpText.textContent = `${caillouState.xp}/${CONFIG.EVOLUTION_THRESHOLD}`;
+    }
+
+    xpBar.style.width = percentage + '%';
+  }
+
+  /**
+   * Affiche la notification d'évolution
+   */
+  function showEvolutionNotification() {
+    const notification = document.createElement('div');
+    notification.className = 'evolution-notification';
+    notification.innerHTML = `
+      <div class="evolution-title">🎉 ÉVOLUTION ! 🎉</div>
+      <div class="evolution-message">${caillouState.name || 'Ton caillou'} est devenu un Rocher !</div>
+    `;
+    document.body.appendChild(notification);
+
+    // Forcer le recalcul de l'image
+    caillouState.currentMood = null;
+    updateDisplay();
+
+    // Supprimer après l'animation
+    setTimeout(() => {
+      notification.remove();
+    }, 3000);
+  }
+
+  /**
+   * Retourne le set d'images selon le stade d'évolution
+   */
+  function getCurrentImageSet() {
+    return caillouState.evolutionStage === 1 ? CONFIG.IMAGES.STAGE1 : CONFIG.IMAGES.STAGE2;
+  }
+
+  // ====================================
+  // GESTION DE LA MORT DU CAILLOU
+  // ====================================
+  
+  function checkDeath() {
+    const hunger = Number(caillouState.hunger) || 0;
+    const boredom = Number(caillouState.boredom) || 0;
+    const happiness = Number(caillouState.happiness) || 0;
+
+    if (hunger === 0 && boredom === 0 && happiness === 0) {
+      caillouState.isDead = true;
+      showGameOver();
+      return true;
+    }
+
+    return false;
+  }
+
+  function showGameOver() {
+    const overlay = document.getElementById('game-over-overlay');
+    const caillouImg = document.getElementById('caillou');
+    const buttons = document.getElementById('action-buttons');
+
+    if (decayTimer) {
+      clearInterval(decayTimer);
+    }
+
+    const imageSet = getCurrentImageSet();
+    caillouImg.src = imageSet.DEAD;
+    caillouImg.style.animation = 'none';
+
+    buttons.style.opacity = '0.3';
+    buttons.style.pointerEvents = 'none';
+
+    setTimeout(() => {
+      overlay.classList.add('active');
+    }, 500);
+
+    console.log('💀 Game Over - Le caillou est mort');
+  }
+
+  function restartGame() {
+    console.log('🔄 Redémarrage du jeu...');
+
+    caillouState = {
+      name: caillouState.name, // Garder le nom
+      xp: 0,                   // Reset XP
+      evolutionStage: 1,       // Retour au stade 1
+      hunger: 100,
+      boredom: 100,
+      happiness: 100,
+      lastUpdate: Date.now(),
+      currentMood: null,
+      isDead: false
+    };
+
+    localStorage.removeItem(CONFIG.STORAGE_KEY);
+    console.log('LocalStorage vidé');
+
+    saveToLocalStorage();
+
+    const overlay = document.getElementById('game-over-overlay');
+    overlay.classList.remove('active');
+
+    const buttons = document.getElementById('action-buttons');
+    buttons.style.opacity = '1';
+    buttons.style.pointerEvents = 'auto';
+
+    const caillouImg = document.getElementById('caillou');
+    caillouImg.style.animation = 'idle-bob 2s ease-in-out infinite';
+    
+    caillouImg.style.opacity = '0';
+    setTimeout(() => {
+      updateDisplay();
+      updateXPDisplay();
+      caillouImg.style.opacity = '1';
+    }, 150);
+
+    if (decayTimer) {
+      clearInterval(decayTimer);
+    }
+    decayTimer = setInterval(decayStats, CONFIG.DECAY_INTERVAL);
+
+    console.log('✅ Jeu redémarré avec succès!');
+  }
 
   // ====================================
   // GESTION DE L'ÉTAT VISUEL DU CAILLOU
   // ====================================
   
-  /**
-   * Calcule l'état du caillou basé sur la logique de priorité
-   */
   function calculateMood() {
-    // Vérifier que les valeurs sont valides
     const hunger = Number(caillouState.hunger) || 0;
     const boredom = Number(caillouState.boredom) || 0;
     const happiness = Number(caillouState.happiness) || 0;
-    
-    // Priorité 1 : La faim est critique
+
+    if (hunger === 0 && boredom === 0 && happiness === 0) {
+      return 'dead';
+    }
+
+    if (hunger <= CONFIG.CRACKED_THRESHOLD || 
+        boredom <= CONFIG.CRACKED_THRESHOLD || 
+        happiness <= CONFIG.CRACKED_THRESHOLD) {
+      return 'cracked';
+    }
+
     if (hunger < CONFIG.CRITICAL_THRESHOLD) {
       return 'hungry';
     }
     
-    // Priorité 2 : Le bonheur ou l'amusement est critique
     if (happiness < CONFIG.CRITICAL_THRESHOLD || boredom < CONFIG.CRITICAL_THRESHOLD) {
       return 'sad';
     }
     
-    // Priorité 3 : Calculer la moyenne pour les états positifs
     const average = (hunger + boredom + happiness) / 3;
     
     if (average >= 60) {
@@ -372,9 +879,6 @@
     }
   }
 
-  /**
-   * Met à jour l'image du caillou en fonction de son humeur
-   */
   function updateCaillouImage() {
     const newMood = calculateMood();
     const caillouImg = document.getElementById('caillou');
@@ -382,19 +886,29 @@
     if (newMood !== caillouState.currentMood) {
       caillouState.currentMood = newMood;
       
+      const imageSet = getCurrentImageSet();
       let newImageSrc;
+      
       switch(newMood) {
+        case 'dead':
+          newImageSrc = imageSet.DEAD;
+          break;
+        case 'cracked':
+          newImageSrc = imageSet.CRACKED;
+          caillouImg.classList.add('cracked');
+          setTimeout(() => caillouImg.classList.remove('cracked'), 500);
+          break;
         case 'happy':
-          newImageSrc = CONFIG.IMAGES.HAPPY;
+          newImageSrc = imageSet.HAPPY;
           break;
         case 'neutral':
-          newImageSrc = CONFIG.IMAGES.NEUTRAL;
+          newImageSrc = imageSet.NEUTRAL;
           break;
         case 'hungry':
-          newImageSrc = CONFIG.IMAGES.HUNGRY;
+          newImageSrc = imageSet.HUNGRY;
           break;
         case 'sad':
-          newImageSrc = CONFIG.IMAGES.SAD;
+          newImageSrc = imageSet.SAD;
           break;
       }
       
@@ -404,22 +918,26 @@
         caillouImg.style.opacity = '1';
       }, 150);
       
-      console.log(`Humeur changée: ${newMood}`);
+      console.log(`Humeur changée: ${newMood} (Stade ${caillouState.evolutionStage})`);
     }
   }
 
   // ====================================
-  // TÂCHE 4: Sauvegarder/charger depuis LocalStorage
+  // SAUVEGARDE / CHARGEMENT
   // ====================================
   
   function saveToLocalStorage() {
     try {
       const dataToSave = {
+        name: caillouState.name,
+        xp: Number(caillouState.xp),
+        evolutionStage: Number(caillouState.evolutionStage),
         hunger: Number(caillouState.hunger),
         boredom: Number(caillouState.boredom),
         happiness: Number(caillouState.happiness),
         lastUpdate: Number(caillouState.lastUpdate),
-        currentMood: caillouState.currentMood
+        currentMood: caillouState.currentMood,
+        isDead: caillouState.isDead
       };
       localStorage.setItem(CONFIG.STORAGE_KEY, JSON.stringify(dataToSave));
       console.log('Données sauvegardées:', dataToSave);
@@ -434,12 +952,15 @@
       if (savedData) {
         const parsed = JSON.parse(savedData);
         
-        // S'assurer que toutes les valeurs sont des nombres valides
+        caillouState.name = parsed.name || '';
+        caillouState.xp = Number(parsed.xp) >= 0 ? Number(parsed.xp) : 0;
+        caillouState.evolutionStage = Number(parsed.evolutionStage) || 1;
         caillouState.hunger = Number(parsed.hunger) >= 0 ? Number(parsed.hunger) : 100;
         caillouState.boredom = Number(parsed.boredom) >= 0 ? Number(parsed.boredom) : 100;
         caillouState.happiness = Number(parsed.happiness) >= 0 ? Number(parsed.happiness) : 100;
         caillouState.lastUpdate = Number(parsed.lastUpdate) || Date.now();
         caillouState.currentMood = parsed.currentMood || 'happy';
+        caillouState.isDead = parsed.isDead || false;
         
         console.log('Données chargées:', caillouState);
         return true;
@@ -451,7 +972,7 @@
   }
 
   // ====================================
-  // TÂCHE 5: Calculer le temps écoulé avec Date.now()
+  // DECAY ET AFFICHAGE
   // ====================================
   
   function catchUpMissedDecay() {
@@ -472,17 +993,11 @@
     }
   }
 
-  // ====================================
-  // TÂCHE 3: Afficher les 3 barres de progression
-  // ====================================
-  
   function updateDisplay() {
-    // S'assurer que les valeurs sont des nombres
     const hunger = Number(caillouState.hunger) || 0;
     const boredom = Number(caillouState.boredom) || 0;
     const happiness = Number(caillouState.happiness) || 0;
     
-    // Barre de faim
     const faimBar = document.getElementById('faim-bar');
     const faimValue = document.getElementById('faim-value');
     if (faimBar && faimValue) {
@@ -490,7 +1005,6 @@
       faimValue.textContent = Math.round(hunger) + '%';
     }
     
-    // Barre d'amusement
     const amusementBar = document.getElementById('amusement-bar');
     const amusementValue = document.getElementById('amusement-value');
     if (amusementBar && amusementValue) {
@@ -498,7 +1012,6 @@
       amusementValue.textContent = Math.round(boredom) + '%';
     }
     
-    // Barre de bonheur
     const bonheurBar = document.getElementById('bonheur-bar');
     const bonheurValue = document.getElementById('bonheur-value');
     if (bonheurBar && bonheurValue) {
@@ -506,15 +1019,12 @@
       bonheurValue.textContent = Math.round(happiness) + '%';
     }
     
-    // Mettre à jour l'image du caillou
     updateCaillouImage();
   }
 
-  // ====================================
-  // TÂCHE 2: Implémenter setInterval pour le decay automatique
-  // ====================================
-  
   function decayStats() {
+    if (caillouState.isDead) return;
+
     caillouState.hunger = Math.max(0, Number(caillouState.hunger) - CONFIG.DECAY_AMOUNT);
     caillouState.boredom = Math.max(0, Number(caillouState.boredom) - CONFIG.DECAY_AMOUNT);
     caillouState.happiness = Math.max(0, Number(caillouState.happiness) - CONFIG.DECAY_AMOUNT);
@@ -522,50 +1032,47 @@
     
     saveToLocalStorage();
     updateDisplay();
+    checkDeath();
     
     console.log('Stats diminuées:', {
       hunger: caillouState.hunger,
       boredom: caillouState.boredom,
       happiness: caillouState.happiness,
+      xp: caillouState.xp,
+      stage: caillouState.evolutionStage,
       mood: caillouState.currentMood
     });
   }
 
   // ====================================
-  // US-03 : NOURRIR LE CAILLOU
+  // ACTIONS DU JOUEUR
   // ====================================
 
   let isFeeding = false;
 
   function feed() {
-    if (isFeeding) return;
+    if (isFeeding || caillouState.isDead) return;
     isFeeding = true;
 
     const btn = document.getElementById('btn-feed');
     const caillouImg = document.getElementById('caillou');
     btn.disabled = true;
 
-    // Sauvegarder le sprite actuel avant de manger
-    const previousSrc = caillouImg.src;
-
-    // Passer au sprite "en train de manger"
+    const imageSet = getCurrentImageSet();
     caillouImg.style.opacity = '0';
     setTimeout(() => {
-      caillouImg.src = 'images/Feed_caillou.png';
+      caillouImg.src = imageSet.FEED;
       caillouImg.style.opacity = '1';
     }, 150);
 
-    // Après 1 seconde, restaurer le sprite précédent et augmenter la faim
     setTimeout(() => {
       caillouState.hunger = Math.min(100, Number(caillouState.hunger) + 20);
+      gainXP(CONFIG.XP_PER_INTERACTION); // +5 XP
       saveToLocalStorage();
 
-      // Recalculer le bon sprite selon l'humeur actuelle
       caillouImg.style.opacity = '0';
       setTimeout(() => {
-        // updateCaillouImage() va forcer le recalcul en réinitialisant currentMood
-        const previousMood = caillouState.currentMood;
-        caillouState.currentMood = null; // force le changement
+        caillouState.currentMood = null;
         updateDisplay();
         caillouImg.style.opacity = '1';
 
@@ -575,18 +1082,10 @@
     }, 1000);
   }
 
-  // ====================================
-  // US-04 : JOUER AVEC LE CAILLOU
-  // ====================================
-
   let isPlaying = false;
 
-  /**
-   * Fonction play() qui augmente l'amusement (réduit l'amusement) de 20-30%
-   * et affiche un feedback visuel
-   */
   function play() {
-    if (isPlaying) return;
+    if (isPlaying || caillouState.isDead) return;
     isPlaying = true;
 
     const btn = document.getElementById('btn-play');
@@ -594,13 +1093,11 @@
     const screen = document.getElementById('game-screen');
     btn.disabled = true;
 
-    // Animation de rebond du caillou
     caillouImg.style.animation = 'none';
     setTimeout(() => {
       caillouImg.style.animation = 'bounce-play 0.8s ease-out';
     }, 10);
 
-    // Créer et afficher un emoji de jeu aléatoire
     const emojis = ['🎮', '⚽', '🎯', '🎲', '🎪', '✨'];
     const randomEmoji = emojis[Math.floor(Math.random() * emojis.length)];
     
@@ -609,31 +1106,25 @@
     emojiEl.textContent = randomEmoji;
     screen.appendChild(emojiEl);
 
-    // Calculer le boost aléatoire entre 20 et 30%
     const boost = Math.floor(
       Math.random() * (CONFIG.PLAY_BOOST_MAX - CONFIG.PLAY_BOOST_MIN + 1) 
       + CONFIG.PLAY_BOOST_MIN
     );
 
-    // Après 1 seconde, augmenter l'amusement (réduire l'amusement signifie augmenter la jauge)
     setTimeout(() => {
       caillouState.boredom = Math.min(100, Number(caillouState.boredom) + boost);
-      
-      // Bonus de bonheur si on joue
       caillouState.happiness = Math.min(100, Number(caillouState.happiness) + 10);
+      gainXP(CONFIG.XP_PER_INTERACTION); // +5 XP
       
-      // Sauvegarder automatiquement dans LocalStorage
       saveToLocalStorage();
       updateDisplay();
 
-      console.log(`Joué avec le caillou! amusement +${boost}%, Bonheur +10%`);
+      console.log(`Joué avec le caillou! Amusement +${boost}%, Bonheur +10%, +${CONFIG.XP_PER_INTERACTION} XP`);
 
-      // Supprimer l'emoji après l'animation
       setTimeout(() => {
         emojiEl.remove();
       }, 1000);
 
-      // Restaurer l'animation normale
       caillouImg.style.animation = 'idle-bob 2s ease-in-out infinite';
 
       isPlaying = false;
@@ -641,35 +1132,31 @@
     }, 800);
   }
 
-  // ====================================
-  // US-05 : CARESSER LE CAILLOU
-  // ====================================
-
   let isPetting = false;
 
   function pet() {
-    if (isPetting) return;
+    if (isPetting || caillouState.isDead) return;
     isPetting = true;
 
     const btn = document.getElementById('btn-pet');
     const caillouImg = document.getElementById('caillou');
     btn.disabled = true;
 
-    // Passer au sprite "en train d'être caressé"
+    const imageSet = getCurrentImageSet();
     caillouImg.style.opacity = '0';
     setTimeout(() => {
-      caillouImg.src = 'images/Pet_caillou.png';
+      caillouImg.src = imageSet.PET;
       caillouImg.style.opacity = '1';
     }, 150);
 
-    // Après 1 seconde, restaurer le sprite selon l'humeur et augmenter le bonheur
     setTimeout(() => {
       caillouState.happiness = Math.min(100, Number(caillouState.happiness) + 20);
+      gainXP(CONFIG.XP_PER_INTERACTION); // +5 XP
       saveToLocalStorage();
 
       caillouImg.style.opacity = '0';
       setTimeout(() => {
-        caillouState.currentMood = null; // force recalcul du sprite
+        caillouState.currentMood = null;
         updateDisplay();
         caillouImg.style.opacity = '1';
 
@@ -680,33 +1167,81 @@
   }
 
   // ====================================
+  // NOMMAGE
+  // ====================================
+
+  function showNamingScreen() {
+    document.getElementById('naming-screen').classList.remove('hidden');
+    setTimeout(() => document.getElementById('naming-input').focus(), 100);
+  }
+
+  function confirmName() {
+    const input = document.getElementById('naming-input');
+    let name = input.value.trim();
+
+    if (!name) {
+      name = 'Rocky';
+    }
+
+    caillouState.name = name;
+    saveToLocalStorage();
+    document.getElementById('naming-screen').classList.add('hidden');
+    updateTitle();
+    
+    console.log("Nom du caillou confirmé :", name);
+  }
+
+  function updateTitle() {
+    const titleEl = document.getElementById('device-title');
+    if (caillouState.name) {
+      titleEl.innerHTML = `🪨 ${caillouState.name} 🪨`;
+    } else {
+      titleEl.textContent = '🪨 CAILLOU 🪨';
+    }
+  }
+
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' && !document.getElementById('naming-screen').classList.contains('hidden')) {
+      confirmName();
+    }
+  });
+
+  // ====================================
   // INITIALISATION
   // ====================================
   
   function init() {
     console.log('Initialisation du Tamagotchi Caillou...');
     
-    // Charger les données sauvegardées
     const hasData = loadFromLocalStorage();
     
     if (hasData) {
       console.log('Données existantes trouvées');
       catchUpMissedDecay();
+      if (caillouState.isDead || checkDeath()) {
+        showGameOver();
+      }
     } else {
       console.log('Première visite - initialisation des données');
       saveToLocalStorage();
+      showNamingScreen();
     }
-    
-    // Afficher l'état initial
+
+    if (hasData && !caillouState.name) {
+      showNamingScreen();
+    }
+
+    updateTitle();
     updateDisplay();
+    updateXPDisplay();
     
-    // Démarrer le timer de dégradation automatique
-    setInterval(decayStats, CONFIG.DECAY_INTERVAL);
+    if (!caillouState.isDead) {
+      decayTimer = setInterval(decayStats, CONFIG.DECAY_INTERVAL);
+    }
     
     console.log('Tamagotchi Caillou initialisé avec succès!');
   }
 
-  // Attendre que le DOM soit complètement chargé
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', init);
   } else {
