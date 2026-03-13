@@ -207,6 +207,12 @@
     --sh: #b8884a;
   }
 
+  .btn.pet {
+    background: #f0a0c0;
+    box-shadow: 0 5px 0 #c06080;
+    --sh: #c06080;
+  }
+
   .btn.play {
     background: #a29bfe;
     box-shadow: 0 5px 0 #6c5ce7;
@@ -289,6 +295,11 @@
     <div class="btn-group">
       <button class="btn feed" id="btn-feed" onclick="feed()">🍃</button>
       <span class="btn-label">NOURRIR</span>
+    </div>
+    
+    <div class="btn-group">
+      <button class="btn pet" id="btn-pet" onclick="pet()">🤚</button>
+      <span class="btn-label">CARESSER</span>
     </div>
     
     <div class="btn-group">
@@ -628,6 +639,44 @@
       isPlaying = false;
       btn.disabled = false;
     }, 800);
+  }
+
+  // ====================================
+  // US-05 : CARESSER LE CAILLOU
+  // ====================================
+
+  let isPetting = false;
+
+  function pet() {
+    if (isPetting) return;
+    isPetting = true;
+
+    const btn = document.getElementById('btn-pet');
+    const caillouImg = document.getElementById('caillou');
+    btn.disabled = true;
+
+    // Passer au sprite "en train d'être caressé"
+    caillouImg.style.opacity = '0';
+    setTimeout(() => {
+      caillouImg.src = 'images/Pet_caillou.png';
+      caillouImg.style.opacity = '1';
+    }, 150);
+
+    // Après 1 seconde, restaurer le sprite selon l'humeur et augmenter le bonheur
+    setTimeout(() => {
+      caillouState.happiness = Math.min(100, Number(caillouState.happiness) + 20);
+      saveToLocalStorage();
+
+      caillouImg.style.opacity = '0';
+      setTimeout(() => {
+        caillouState.currentMood = null; // force recalcul du sprite
+        updateDisplay();
+        caillouImg.style.opacity = '1';
+
+        isPetting = false;
+        btn.disabled = false;
+      }, 150);
+    }, 1000);
   }
 
   // ====================================
