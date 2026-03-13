@@ -103,6 +103,13 @@
     50%       { transform: translateY(-8px); }
   }
 
+  @keyframes bounce-play {
+    0%, 100% { transform: translateY(0px) rotate(0deg); }
+    25% { transform: translateY(-15px) rotate(-5deg); }
+    50% { transform: translateY(-20px) rotate(0deg); }
+    75% { transform: translateY(-15px) rotate(5deg); }
+  }
+
   .stats {
     margin-top: 20px;
     display: flex;
@@ -164,13 +171,14 @@
   }
 
   .faim { background: linear-gradient(135deg, #ff9a76, #ff6b6b); }
-  .ennui { background: linear-gradient(135deg, #a29bfe, #6c5ce7); }
+  .amusement { background: linear-gradient(135deg, #a29bfe, #6c5ce7); }
   .bonheur { background: linear-gradient(135deg, #ffd93d, #ffb142); }
 
   .buttons-row {
     margin-top: 20px;
     display: flex;
     justify-content: center;
+    gap: 20px;
   }
 
   .btn-group {
@@ -199,11 +207,45 @@
     --sh: #b8884a;
   }
 
+  .btn.play {
+    background: #a29bfe;
+    box-shadow: 0 5px 0 #6c5ce7;
+    --sh: #6c5ce7;
+  }
+
   .btn-label {
     font-family: 'Fredoka One', cursive;
     font-size: 0.65rem;
     color: #3d2b1f;
     letter-spacing: 0.5px;
+  }
+
+  /* Feedback visuel pour le jeu */
+  .play-emoji {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 3rem;
+    opacity: 0;
+    z-index: 15;
+    pointer-events: none;
+    animation: float-up 1s ease-out;
+  }
+
+  @keyframes float-up {
+    0% {
+      opacity: 1;
+      transform: translate(-50%, -50%) scale(0.5);
+    }
+    50% {
+      opacity: 1;
+      transform: translate(-50%, -80px) scale(1.2);
+    }
+    100% {
+      opacity: 0;
+      transform: translate(-50%, -120px) scale(0.8);
+    }
   }
 </style>
 </head>
@@ -212,7 +254,7 @@
 <div class="device">
   <div class="title">🪨 CAILLOU 🪨</div>
 
-  <div class="screen">
+  <div class="screen" id="game-screen">
     <div class="ground"></div>
     <img id="caillou" src="images/Sprite caillou.png" alt="Caillou" />
   </div>
@@ -227,10 +269,10 @@
     </div>
 
     <div class="stat-row">
-      <div class="stat-label">🎮 Ennui</div>
+      <div class="stat-label">🎮 Amusement</div>
       <div class="stat-bar-container">
-        <div class="stat-bar ennui" id="ennui-bar" style="width: 100%"></div>
-        <div class="stat-value" id="ennui-value">100%</div>
+        <div class="stat-bar amusement" id="amusement-bar" style="width: 100%"></div>
+        <div class="stat-value" id="amusement-value">100%</div>
       </div>
     </div>
 
@@ -247,6 +289,11 @@
     <div class="btn-group">
       <button class="btn feed" id="btn-feed" onclick="feed()">🍃</button>
       <span class="btn-label">NOURRIR</span>
+    </div>
+    
+    <div class="btn-group">
+      <button class="btn play" id="btn-play" onclick="play()">🎮</button>
+      <span class="btn-label">JOUER</span>
     </div>
   </div>
 </div>
@@ -265,7 +312,9 @@
       HUNGRY: 'images/Hungry_caillou.png',
       SAD: 'images/Bored_caillou.png'
     },
-    CRITICAL_THRESHOLD: 30 // Seuil critique pour une stat
+    CRITICAL_THRESHOLD: 30, // Seuil critique pour une stat
+    PLAY_BOOST_MIN: 20,     // Boost minimum pour jouer
+    PLAY_BOOST_MAX: 30      // Boost maximum pour jouer
   };
 
   // ====================================
@@ -297,7 +346,7 @@
       return 'hungry';
     }
     
-    // Priorité 2 : Le bonheur ou l'ennui est critique
+    // Priorité 2 : Le bonheur ou l'amusement est critique
     if (happiness < CONFIG.CRITICAL_THRESHOLD || boredom < CONFIG.CRITICAL_THRESHOLD) {
       return 'sad';
     }
@@ -430,12 +479,12 @@
       faimValue.textContent = Math.round(hunger) + '%';
     }
     
-    // Barre d'ennui
-    const ennuiBar = document.getElementById('ennui-bar');
-    const ennuiValue = document.getElementById('ennui-value');
-    if (ennuiBar && ennuiValue) {
-      ennuiBar.style.width = boredom + '%';
-      ennuiValue.textContent = Math.round(boredom) + '%';
+    // Barre d'amusement
+    const amusementBar = document.getElementById('amusement-bar');
+    const amusementValue = document.getElementById('amusement-value');
+    if (amusementBar && amusementValue) {
+      amusementBar.style.width = boredom + '%';
+      amusementValue.textContent = Math.round(boredom) + '%';
     }
     
     // Barre de bonheur
@@ -513,6 +562,72 @@
         btn.disabled = false;
       }, 150);
     }, 1000);
+  }
+
+  // ====================================
+  // US-04 : JOUER AVEC LE CAILLOU
+  // ====================================
+
+  let isPlaying = false;
+
+  /**
+   * Fonction play() qui augmente l'amusement (réduit l'amusement) de 20-30%
+   * et affiche un feedback visuel
+   */
+  function play() {
+    if (isPlaying) return;
+    isPlaying = true;
+
+    const btn = document.getElementById('btn-play');
+    const caillouImg = document.getElementById('caillou');
+    const screen = document.getElementById('game-screen');
+    btn.disabled = true;
+
+    // Animation de rebond du caillou
+    caillouImg.style.animation = 'none';
+    setTimeout(() => {
+      caillouImg.style.animation = 'bounce-play 0.8s ease-out';
+    }, 10);
+
+    // Créer et afficher un emoji de jeu aléatoire
+    const emojis = ['🎮', '⚽', '🎯', '🎲', '🎪', '✨'];
+    const randomEmoji = emojis[Math.floor(Math.random() * emojis.length)];
+    
+    const emojiEl = document.createElement('div');
+    emojiEl.className = 'play-emoji';
+    emojiEl.textContent = randomEmoji;
+    screen.appendChild(emojiEl);
+
+    // Calculer le boost aléatoire entre 20 et 30%
+    const boost = Math.floor(
+      Math.random() * (CONFIG.PLAY_BOOST_MAX - CONFIG.PLAY_BOOST_MIN + 1) 
+      + CONFIG.PLAY_BOOST_MIN
+    );
+
+    // Après 1 seconde, augmenter l'amusement (réduire l'amusement signifie augmenter la jauge)
+    setTimeout(() => {
+      caillouState.boredom = Math.min(100, Number(caillouState.boredom) + boost);
+      
+      // Bonus de bonheur si on joue
+      caillouState.happiness = Math.min(100, Number(caillouState.happiness) + 10);
+      
+      // Sauvegarder automatiquement dans LocalStorage
+      saveToLocalStorage();
+      updateDisplay();
+
+      console.log(`Joué avec le caillou! amusement +${boost}%, Bonheur +10%`);
+
+      // Supprimer l'emoji après l'animation
+      setTimeout(() => {
+        emojiEl.remove();
+      }, 1000);
+
+      // Restaurer l'animation normale
+      caillouImg.style.animation = 'idle-bob 2s ease-in-out infinite';
+
+      isPlaying = false;
+      btn.disabled = false;
+    }, 800);
   }
 
   // ====================================
