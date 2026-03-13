@@ -300,7 +300,92 @@
     to { transform: translateY(0); opacity: 1; }
   }
 
-  .game-over-title {
+  /* US-07 : Écran de nommage */
+  .naming-screen {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.55);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 100;
+  }
+
+  .naming-screen.hidden { display: none; }
+
+  .naming-card {
+    background: #e8dcc8;
+    border-radius: 28px;
+    border: 4px solid #c4a882;
+    box-shadow: 0 10px 0 #a08060, 0 16px 40px rgba(0,0,0,0.35);
+    padding: 30px 28px 28px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 16px;
+    width: 260px;
+  }
+
+  .naming-sprite {
+    width: 90px;
+    height: 90px;
+    object-fit: contain;
+    animation: idle-bob 2s ease-in-out infinite;
+    filter: drop-shadow(0 4px 8px rgba(0,0,0,0.25));
+  }
+
+  .naming-title {
+    font-family: 'Fredoka One', cursive;
+    font-size: 1rem;
+    color: #3d2b1f;
+    text-align: center;
+    letter-spacing: 1px;
+  }
+
+  .naming-input {
+    width: 100%;
+    padding: 10px 14px;
+    border-radius: 14px;
+    border: 3px solid #c4a882;
+    background: #f5efe0;
+    font-family: 'Fredoka One', cursive;
+    font-size: 1.1rem;
+    color: #3d2b1f;
+    text-align: center;
+    outline: none;
+    box-shadow: inset 0 2px 5px rgba(0,0,0,0.1);
+    transition: border-color 0.2s;
+  }
+
+  .naming-input:focus { border-color: #e8b860; }
+
+  .naming-btn {
+    width: 100%;
+    padding: 12px;
+    border-radius: 14px;
+    border: none;
+    cursor: pointer;
+    font-family: 'Fredoka One', cursive;
+    font-size: 1rem;
+    letter-spacing: 1px;
+    background: #e8b860;
+    color: #3d2b1f;
+    box-shadow: 0 5px 0 #b8884a;
+    transition: transform 0.1s, box-shadow 0.1s;
+  }
+
+  .naming-btn:active {
+    transform: translateY(4px);
+    box-shadow: 0 1px 0 #b8884a;
+  }
+
+  /* Nom affiché dans le titre */
+  .title span {
+    font-size: 0.75rem;
+    opacity: 0.8;
+    display: block;
+    letter-spacing: 1px;
+  }
     font-family: 'Fredoka One', cursive;
     font-size: 1.8rem;
     color: #8b4513;
@@ -358,8 +443,17 @@
 </head>
 <body>
 
+<div class="naming-screen hidden" id="naming-screen">
+  <div class="naming-card">
+    <img class="naming-sprite" src="images/Sprite caillou.png" alt="Caillou" />
+    <div class="naming-title">🪨 Un nouveau caillou est né !<br>Donne-lui un prénom</div>
+    <input class="naming-input" id="naming-input" type="text" maxlength="12" placeholder="Mon Caillou..." />
+    <button class="naming-btn" onclick="confirmName()">C'est parti ! 🪨</button>
+  </div>
+</div>
+
 <div class="device">
-  <div class="title">🪨 CAILLOU 🪨</div>
+  <div class="title" id="device-title">🪨 CAILLOU 🪨</div>
 
   <div class="screen" id="game-screen">
     <div class="ground"></div>
@@ -449,6 +543,7 @@
   // TÂCHE 1: Créer l'objet état du caillou
   // ====================================
   let caillouState = {
+    name: '',
     hunger: 100,
     boredom: 100,
     happiness: 100,
@@ -662,6 +757,7 @@ function restartGame() {
   function saveToLocalStorage() {
     try {
       const dataToSave = {
+        name: caillouState.name,
         hunger: Number(caillouState.hunger),
         boredom: Number(caillouState.boredom),
         happiness: Number(caillouState.happiness),
@@ -682,6 +778,7 @@ function restartGame() {
       if (savedData) {
         const parsed = JSON.parse(savedData);
         
+        caillouState.name = parsed.name || '';
         caillouState.hunger = Number(parsed.hunger) >= 0 ? Number(parsed.hunger) : 100;
         caillouState.boredom = Number(parsed.boredom) >= 0 ? Number(parsed.boredom) : 100;
         caillouState.happiness = Number(parsed.happiness) >= 0 ? Number(parsed.happiness) : 100;
@@ -910,6 +1007,46 @@ function restartGame() {
   }
 
   // ====================================
+  // US-07 : DONNER UN NOM AU CAILLOU
+  // ====================================
+
+  function showNamingScreen() {
+    document.getElementById('naming-screen').classList.remove('hidden');
+    setTimeout(() => document.getElementById('naming-input').focus(), 100);
+  }
+
+  function confirmName() {
+    const input = document.getElementById('naming-input');
+    const name = input.value.trim();
+    if (!name) {
+      input.style.borderColor = '#e05050';
+      input.placeholder = 'Tape un prénom !';
+      setTimeout(() => input.style.borderColor = '', 800);
+      return;
+    }
+    caillouState.name = name;
+    saveToLocalStorage();
+    document.getElementById('naming-screen').classList.add('hidden');
+    updateTitle();
+  }
+
+  function updateTitle() {
+    const titleEl = document.getElementById('device-title');
+    if (caillouState.name) {
+      titleEl.innerHTML = `🪨 ${caillouState.name} 🪨`;
+    } else {
+      titleEl.textContent = '🪨 CAILLOU 🪨';
+    }
+  }
+
+  // Valider avec Entrée
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' && !document.getElementById('naming-screen').classList.contains('hidden')) {
+      confirmName();
+    }
+  });
+
+  // ====================================
   // INITIALISATION
   // ====================================
   
@@ -921,16 +1058,21 @@ function restartGame() {
     if (hasData) {
       console.log('Données existantes trouvées');
       catchUpMissedDecay();
-
-      // Vérifier si le caillou était mort
       if (caillouState.isDead || checkDeath()) {
         showGameOver();
       }
     } else {
       console.log('Première visite - initialisation des données');
       saveToLocalStorage();
+      showNamingScreen();
     }
-    
+
+    // Si données existantes mais pas de nom (migration ancienne save)
+    if (hasData && !caillouState.name) {
+      showNamingScreen();
+    }
+
+    updateTitle();
     updateDisplay();
     
     // Ne démarrer le timer que si le caillou n'est pas mort
