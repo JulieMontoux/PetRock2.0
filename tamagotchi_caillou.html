@@ -101,6 +101,70 @@
     0%, 100% { transform: translateY(0px); }
     50%       { transform: translateY(-8px); }
   }
+
+  .stats {
+    margin-top: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .stat-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .stat-label {
+    font-family: 'Fredoka One', cursive;
+    font-size: 0.75rem;
+    color: #3d2b1f;
+    min-width: 65px;
+    text-align: right;
+  }
+
+  .stat-bar-container {
+    flex: 1;
+    height: 18px;
+    background: rgba(255,255,255,0.4);
+    border-radius: 10px;
+    border: 2px solid #a08060;
+    overflow: hidden;
+    position: relative;
+    box-shadow: inset 0 2px 4px rgba(0,0,0,0.2);
+  }
+
+  .stat-bar {
+    height: 100%;
+    transition: width 0.5s ease-out, background-color 0.3s ease;
+    border-radius: 8px 0 0 8px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .stat-bar::after {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 40%;
+    background: linear-gradient(to bottom, rgba(255,255,255,0.4), transparent);
+  }
+
+  .stat-value {
+    position: absolute;
+    right: 4px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-family: 'Fredoka One', cursive;
+    font-size: 0.65rem;
+    color: #3d2b1f;
+    text-shadow: 0 1px 2px rgba(255,255,255,0.8);
+    z-index: 1;
+  }
+
+  .faim { background: linear-gradient(135deg, #ff9a76, #ff6b6b); }
+  .ennui { background: linear-gradient(135deg, #a29bfe, #6c5ce7); }
+  .bonheur { background: linear-gradient(135deg, #ffd93d, #ffb142); }
 </style>
 </head>
 <body>
@@ -112,7 +176,110 @@
     <div class="ground"></div>
     <img id="caillou" src="Sprite caillou.png" alt="Caillou" />
   </div>
+
+  <div class="stats">
+    <div class="stat-row">
+      <div class="stat-label">🍖 Faim</div>
+      <div class="stat-bar-container">
+        <div class="stat-bar faim" id="faim-bar" style="width: 100%"></div>
+        <div class="stat-value" id="faim-value">100%</div>
+      </div>
+    </div>
+
+    <div class="stat-row">
+      <div class="stat-label">🎮 Ennui</div>
+      <div class="stat-bar-container">
+        <div class="stat-bar ennui" id="ennui-bar" style="width: 100%"></div>
+        <div class="stat-value" id="ennui-value">100%</div>
+      </div>
+    </div>
+
+    <div class="stat-row">
+      <div class="stat-label">😊 Bonheur</div>
+      <div class="stat-bar-container">
+        <div class="stat-bar bonheur" id="bonheur-bar" style="width: 100%"></div>
+        <div class="stat-value" id="bonheur-value">100%</div>
+      </div>
+    </div>
+  </div>
 </div>
+
+<script>
+  const STORAGE_KEY = 'tamagotchi_caillou_data';
+  const DECAY_INTERVAL = 30000; // 30 secondes
+  const DECAY_AMOUNT = 5; // Diminue de 5% toutes les 30s
+
+  let stats = {
+    faim: 100,
+    ennui: 100,
+    bonheur: 100,
+    lastUpdate: Date.now()
+  };
+
+  // Charger les données depuis localStorage
+  function loadStats() {
+    const saved = localStorage.getItem(STORAGE_KEY);
+    if (saved) {
+      try {
+        const parsed = JSON.parse(saved);
+        stats = parsed;
+        
+        // Calculer le temps écoulé et rattraper les diminutions
+        const now = Date.now();
+        const elapsed = now - stats.lastUpdate;
+        const missedIntervals = Math.floor(elapsed / DECAY_INTERVAL);
+        
+        if (missedIntervals > 0) {
+          stats.faim = Math.max(0, stats.faim - (DECAY_AMOUNT * missedIntervals));
+          stats.ennui = Math.max(0, stats.ennui - (DECAY_AMOUNT * missedIntervals));
+          stats.bonheur = Math.max(0, stats.bonheur - (DECAY_AMOUNT * missedIntervals));
+          stats.lastUpdate = now;
+          saveStats();
+        }
+      } catch (e) {
+        console.error('Erreur lors du chargement des stats', e);
+      }
+    }
+  }
+
+  // Sauvegarder les données dans localStorage
+  function saveStats() {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(stats));
+  }
+
+  // Mettre à jour l'affichage
+  function updateDisplay() {
+    // Faim
+    document.getElementById('faim-bar').style.width = stats.faim + '%';
+    document.getElementById('faim-value').textContent = Math.round(stats.faim) + '%';
+    
+    // Ennui
+    document.getElementById('ennui-bar').style.width = stats.ennui + '%';
+    document.getElementById('ennui-value').textContent = Math.round(stats.ennui) + '%';
+    
+    // Bonheur
+    document.getElementById('bonheur-bar').style.width = stats.bonheur + '%';
+    document.getElementById('bonheur-value').textContent = Math.round(stats.bonheur) + '%';
+  }
+
+  // Diminuer les stats
+  function decayStats() {
+    stats.faim = Math.max(0, stats.faim - DECAY_AMOUNT);
+    stats.ennui = Math.max(0, stats.ennui - DECAY_AMOUNT);
+    stats.bonheur = Math.max(0, stats.bonheur - DECAY_AMOUNT);
+    stats.lastUpdate = Date.now();
+    
+    saveStats();
+    updateDisplay();
+  }
+
+  // Initialisation
+  loadStats();
+  updateDisplay();
+
+  // Timer pour la diminution automatique
+  setInterval(decayStats, DECAY_INTERVAL);
+</script>
 
 </body>
 </html>
