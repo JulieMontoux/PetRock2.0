@@ -1,6 +1,8 @@
 # PetRock2.0
 Tamagotchi de caillou - Parce que votre caillou mérite de l'amour (et qu'il a faim, allez savoir pourquoi).
 
+[Suivi de projet](https://github.com/users/JulieMontoux/projects/7/views/1)
+
 **Pitch en 1 ligne :**
 Un Tamagotchi absurde où vous élevez un caillou virtuel avec des besoins inexplicables, le faites évoluer du simple galet au rocher légendaire, le tout en 100% LocalStorage.
 
