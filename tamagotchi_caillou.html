@@ -95,12 +95,77 @@
     filter: drop-shadow(0 6px 10px rgba(0,0,0,0.3));
     animation: idle-bob 2s ease-in-out infinite;
     transform-origin: center bottom;
+    transition: opacity 0.3s ease;
   }
 
   @keyframes idle-bob {
     0%, 100% { transform: translateY(0px); }
     50%       { transform: translateY(-8px); }
   }
+
+  .stats {
+    margin-top: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .stat-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .stat-label {
+    font-family: 'Fredoka One', cursive;
+    font-size: 0.75rem;
+    color: #3d2b1f;
+    min-width: 65px;
+    text-align: right;
+  }
+
+  .stat-bar-container {
+    flex: 1;
+    height: 18px;
+    background: rgba(255,255,255,0.4);
+    border-radius: 10px;
+    border: 2px solid #a08060;
+    overflow: hidden;
+    position: relative;
+    box-shadow: inset 0 2px 4px rgba(0,0,0,0.2);
+  }
+
+  .stat-bar {
+    height: 100%;
+    transition: width 0.5s ease-out, background-color 0.3s ease;
+    border-radius: 8px 0 0 8px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .stat-bar::after {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 40%;
+    background: linear-gradient(to bottom, rgba(255,255,255,0.4), transparent);
+  }
+
+  .stat-value {
+    position: absolute;
+    right: 4px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-family: 'Fredoka One', cursive;
+    font-size: 0.65rem;
+    color: #3d2b1f;
+    text-shadow: 0 1px 2px rgba(255,255,255,0.8);
+    z-index: 1;
+  }
+
+  .faim { background: linear-gradient(135deg, #ff9a76, #ff6b6b); }
+  .ennui { background: linear-gradient(135deg, #a29bfe, #6c5ce7); }
+  .bonheur { background: linear-gradient(135deg, #ffd93d, #ffb142); }
 </style>
 </head>
 <body>
@@ -110,9 +175,290 @@
 
   <div class="screen">
     <div class="ground"></div>
-    <img id="caillou" src="Sprite caillou.png" alt="Caillou" />
+    <img id="caillou" src="images/Sprite caillou.png" alt="Caillou" />
+  </div>
+
+  <div class="stats">
+    <div class="stat-row">
+      <div class="stat-label">🍖 Faim</div>
+      <div class="stat-bar-container">
+        <div class="stat-bar faim" id="faim-bar" style="width: 100%"></div>
+        <div class="stat-value" id="faim-value">100%</div>
+      </div>
+    </div>
+
+    <div class="stat-row">
+      <div class="stat-label">🎮 Ennui</div>
+      <div class="stat-bar-container">
+        <div class="stat-bar ennui" id="ennui-bar" style="width: 100%"></div>
+        <div class="stat-value" id="ennui-value">100%</div>
+      </div>
+    </div>
+
+    <div class="stat-row">
+      <div class="stat-label">😊 Bonheur</div>
+      <div class="stat-bar-container">
+        <div class="stat-bar bonheur" id="bonheur-bar" style="width: 100%"></div>
+        <div class="stat-value" id="bonheur-value">100%</div>
+      </div>
+    </div>
   </div>
 </div>
+
+<script>
+  // ====================================
+  // CONFIGURATION
+  // ====================================
+  const CONFIG = {
+    STORAGE_KEY: 'tamagotchi_caillou_data',
+    DECAY_INTERVAL: 30000, // 30 secondes
+    DECAY_AMOUNT: 5, // Diminue de 5% toutes les 30s
+    IMAGES: {
+      HAPPY: 'images/Happy_caillou.png',
+      NEUTRAL: 'images/Sprite caillou.png',
+      HUNGRY: 'images/Hungry_caillou.png',
+      SAD: 'images/Bored_caillou.png'
+    },
+    CRITICAL_THRESHOLD: 30 // Seuil critique pour une stat
+  };
+
+  // ====================================
+  // TÂCHE 1: Créer l'objet état du caillou
+  // ====================================
+  let caillouState = {
+    hunger: 100,
+    boredom: 100,
+    happiness: 100,
+    lastUpdate: Date.now(),
+    currentMood: 'happy'
+  };
+
+  // ====================================
+  // GESTION DE L'ÉTAT VISUEL DU CAILLOU
+  // ====================================
+  
+  /**
+   * Calcule l'état du caillou basé sur la logique de priorité
+   */
+  function calculateMood() {
+    // Vérifier que les valeurs sont valides
+    const hunger = Number(caillouState.hunger) || 0;
+    const boredom = Number(caillouState.boredom) || 0;
+    const happiness = Number(caillouState.happiness) || 0;
+    
+    // Priorité 1 : La faim est critique
+    if (hunger < CONFIG.CRITICAL_THRESHOLD) {
+      return 'hungry';
+    }
+    
+    // Priorité 2 : Le bonheur ou l'ennui est critique
+    if (happiness < CONFIG.CRITICAL_THRESHOLD || boredom < CONFIG.CRITICAL_THRESHOLD) {
+      return 'sad';
+    }
+    
+    // Priorité 3 : Calculer la moyenne pour les états positifs
+    const average = (hunger + boredom + happiness) / 3;
+    
+    if (average >= 60) {
+      return 'happy';
+    } else {
+      return 'neutral';
+    }
+  }
+
+  /**
+   * Met à jour l'image du caillou en fonction de son humeur
+   */
+  function updateCaillouImage() {
+    const newMood = calculateMood();
+    const caillouImg = document.getElementById('caillou');
+    
+    if (newMood !== caillouState.currentMood) {
+      caillouState.currentMood = newMood;
+      
+      let newImageSrc;
+      switch(newMood) {
+        case 'happy':
+          newImageSrc = CONFIG.IMAGES.HAPPY;
+          break;
+        case 'neutral':
+          newImageSrc = CONFIG.IMAGES.NEUTRAL;
+          break;
+        case 'hungry':
+          newImageSrc = CONFIG.IMAGES.HUNGRY;
+          break;
+        case 'sad':
+          newImageSrc = CONFIG.IMAGES.SAD;
+          break;
+      }
+      
+      caillouImg.style.opacity = '0';
+      setTimeout(() => {
+        caillouImg.src = newImageSrc;
+        caillouImg.style.opacity = '1';
+      }, 150);
+      
+      console.log(`Humeur changée: ${newMood}`);
+    }
+  }
+
+  // ====================================
+  // TÂCHE 4: Sauvegarder/charger depuis LocalStorage
+  // ====================================
+  
+  function saveToLocalStorage() {
+    try {
+      const dataToSave = {
+        hunger: Number(caillouState.hunger),
+        boredom: Number(caillouState.boredom),
+        happiness: Number(caillouState.happiness),
+        lastUpdate: Number(caillouState.lastUpdate),
+        currentMood: caillouState.currentMood
+      };
+      localStorage.setItem(CONFIG.STORAGE_KEY, JSON.stringify(dataToSave));
+      console.log('Données sauvegardées:', dataToSave);
+    } catch (error) {
+      console.error('Erreur lors de la sauvegarde:', error);
+    }
+  }
+
+  function loadFromLocalStorage() {
+    try {
+      const savedData = localStorage.getItem(CONFIG.STORAGE_KEY);
+      if (savedData) {
+        const parsed = JSON.parse(savedData);
+        
+        // S'assurer que toutes les valeurs sont des nombres valides
+        caillouState.hunger = Number(parsed.hunger) >= 0 ? Number(parsed.hunger) : 100;
+        caillouState.boredom = Number(parsed.boredom) >= 0 ? Number(parsed.boredom) : 100;
+        caillouState.happiness = Number(parsed.happiness) >= 0 ? Number(parsed.happiness) : 100;
+        caillouState.lastUpdate = Number(parsed.lastUpdate) || Date.now();
+        caillouState.currentMood = parsed.currentMood || 'happy';
+        
+        console.log('Données chargées:', caillouState);
+        return true;
+      }
+    } catch (error) {
+      console.error('Erreur lors du chargement:', error);
+    }
+    return false;
+  }
+
+  // ====================================
+  // TÂCHE 5: Calculer le temps écoulé avec Date.now()
+  // ====================================
+  
+  function catchUpMissedDecay() {
+    const now = Date.now();
+    const elapsedTime = now - caillouState.lastUpdate;
+    const missedIntervals = Math.floor(elapsedTime / CONFIG.DECAY_INTERVAL);
+    
+    if (missedIntervals > 0) {
+      console.log(`Rattrapage de ${missedIntervals} intervalles manqués`);
+      
+      const totalDecay = CONFIG.DECAY_AMOUNT * missedIntervals;
+      caillouState.hunger = Math.max(0, Number(caillouState.hunger) - totalDecay);
+      caillouState.boredom = Math.max(0, Number(caillouState.boredom) - totalDecay);
+      caillouState.happiness = Math.max(0, Number(caillouState.happiness) - totalDecay);
+      caillouState.lastUpdate = now;
+      
+      saveToLocalStorage();
+    }
+  }
+
+  // ====================================
+  // TÂCHE 3: Afficher les 3 barres de progression
+  // ====================================
+  
+  function updateDisplay() {
+    // S'assurer que les valeurs sont des nombres
+    const hunger = Number(caillouState.hunger) || 0;
+    const boredom = Number(caillouState.boredom) || 0;
+    const happiness = Number(caillouState.happiness) || 0;
+    
+    // Barre de faim
+    const faimBar = document.getElementById('faim-bar');
+    const faimValue = document.getElementById('faim-value');
+    if (faimBar && faimValue) {
+      faimBar.style.width = hunger + '%';
+      faimValue.textContent = Math.round(hunger) + '%';
+    }
+    
+    // Barre d'ennui
+    const ennuiBar = document.getElementById('ennui-bar');
+    const ennuiValue = document.getElementById('ennui-value');
+    if (ennuiBar && ennuiValue) {
+      ennuiBar.style.width = boredom + '%';
+      ennuiValue.textContent = Math.round(boredom) + '%';
+    }
+    
+    // Barre de bonheur
+    const bonheurBar = document.getElementById('bonheur-bar');
+    const bonheurValue = document.getElementById('bonheur-value');
+    if (bonheurBar && bonheurValue) {
+      bonheurBar.style.width = happiness + '%';
+      bonheurValue.textContent = Math.round(happiness) + '%';
+    }
+    
+    // Mettre à jour l'image du caillou
+    updateCaillouImage();
+  }
+
+  // ====================================
+  // TÂCHE 2: Implémenter setInterval pour le decay automatique
+  // ====================================
+  
+  function decayStats() {
+    caillouState.hunger = Math.max(0, Number(caillouState.hunger) - CONFIG.DECAY_AMOUNT);
+    caillouState.boredom = Math.max(0, Number(caillouState.boredom) - CONFIG.DECAY_AMOUNT);
+    caillouState.happiness = Math.max(0, Number(caillouState.happiness) - CONFIG.DECAY_AMOUNT);
+    caillouState.lastUpdate = Date.now();
+    
+    saveToLocalStorage();
+    updateDisplay();
+    
+    console.log('Stats diminuées:', {
+      hunger: caillouState.hunger,
+      boredom: caillouState.boredom,
+      happiness: caillouState.happiness,
+      mood: caillouState.currentMood
+    });
+  }
+
+  // ====================================
+  // INITIALISATION
+  // ====================================
+  
+  function init() {
+    console.log('Initialisation du Tamagotchi Caillou...');
+    
+    // Charger les données sauvegardées
+    const hasData = loadFromLocalStorage();
+    
+    if (hasData) {
+      console.log('Données existantes trouvées');
+      catchUpMissedDecay();
+    } else {
+      console.log('Première visite - initialisation des données');
+      saveToLocalStorage();
+    }
+    
+    // Afficher l'état initial
+    updateDisplay();
+    
+    // Démarrer le timer de dégradation automatique
+    setInterval(decayStats, CONFIG.DECAY_INTERVAL);
+    
+    console.log('Tamagotchi Caillou initialisé avec succès!');
+  }
+
+  // Attendre que le DOM soit complètement chargé
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', init);
+  } else {
+    init();
+  }
+</script>
 
 </body>
 </html>
