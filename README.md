@@ -1,4 +1,3 @@
-```markdown
 # PetRock2.0
 Tamagotchi de caillou - Parce que votre caillou mérite de l'amour (et qu'il a faim, allez savoir pourquoi).
 
@@ -168,4 +167,3 @@ open index.html
 - Stack technique : Le strict minimum pour qu'un caillou soit heureux
 
 *Made with ❤️ and complete absurdity*
-```
