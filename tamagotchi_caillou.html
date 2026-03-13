@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tamagotchi Caillou 🪨</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Fredoka+One&display=swap');
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    min-height: 100vh;
+    background: #f5efe0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-image:
+      radial-gradient(circle at 20% 20%, rgba(200,180,140,0.3) 0%, transparent 50%),
+      radial-gradient(circle at 80% 80%, rgba(180,160,120,0.2) 0%, transparent 50%);
+  }
+
+  .device {
+    width: 280px;
+    background: #e8dcc8;
+    border-radius: 40px 40px 60px 60px;
+    border: 4px solid #c4a882;
+    box-shadow:
+      0 8px 0 #a08060,
+      0 12px 30px rgba(0,0,0,0.25),
+      inset 0 2px 4px rgba(255,255,255,0.5);
+    padding: 24px 20px 32px;
+    position: relative;
+  }
+
+  .device::before {
+    content: '';
+    position: absolute;
+    top: 12px; left: 50%; transform: translateX(-50%);
+    width: 60px; height: 8px;
+    background: rgba(255,255,255,0.4);
+    border-radius: 4px;
+  }
+
+  .title {
+    text-align: center;
+    font-family: 'Fredoka One', cursive;
+    font-size: 1rem;
+    color: #3d2b1f;
+    letter-spacing: 2px;
+    margin-bottom: 16px;
+    opacity: 0.6;
+  }
+
+  .screen {
+    background: #d4e8c2;
+    border-radius: 20px;
+    border: 3px solid #8ab06a;
+    box-shadow: inset 0 4px 12px rgba(0,0,0,0.15), 0 2px 4px rgba(255,255,255,0.6);
+    position: relative;
+    overflow: hidden;
+    height: 240px;
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+  }
+
+  .screen::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 40%;
+    background: linear-gradient(to bottom, rgba(255,255,255,0.2), transparent);
+    border-radius: 18px 18px 0 0;
+    pointer-events: none;
+    z-index: 10;
+  }
+
+  .ground {
+    position: absolute;
+    bottom: 0;
+    width: 100%;
+    height: 22px;
+    background: linear-gradient(to bottom, #b8d890, #90b870);
+    border-radius: 0 0 18px 18px;
+  }
+
+  #caillou {
+    width: 130px;
+    height: 130px;
+    object-fit: contain;
+    position: relative;
+    z-index: 2;
+    margin-bottom: 14px;
+    filter: drop-shadow(0 6px 10px rgba(0,0,0,0.3));
+    animation: idle-bob 2s ease-in-out infinite;
+    transform-origin: center bottom;
+  }
+
+  @keyframes idle-bob {
+    0%, 100% { transform: translateY(0px); }
+    50%       { transform: translateY(-8px); }
+  }
+</style>
+</head>
+<body>
+
+<div class="device">
+  <div class="title">🪨 CAILLOU 🪨</div>
+
+  <div class="screen">
+    <div class="ground"></div>
+    <img id="caillou" src="Sprite caillou.png" alt="Caillou" />
+  </div>
+</div>
+
+</body>
+</html>
